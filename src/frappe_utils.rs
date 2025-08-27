@@ -327,11 +327,12 @@ impl FrappeAnalyzer {
         let perms_array = json_value
             .get("permissions")
             .and_then(|v| v.as_array())
-            .unwrap_or(&Vec::new());
+            .cloned() // clone the Vec<Value>
+            .unwrap_or_default(); // empty Vec if none;
 
         let mut permissions = Vec::new();
         for perm_val in perms_array {
-            if let Ok(perm) = self.parse_single_permission(perm_val) {
+            if let Ok(perm) = self.parse_single_permission(&perm_val) {
                 permissions.push(perm);
             }
         }

@@ -441,12 +441,19 @@ impl TestRunner {
 
     fn extract_error_location(&self, error_message: &str) -> (Option<u32>, Option<String>) {
         // Pattern to match file path and line number from traceback
-        let location_re = Regex::new(r#"File "([^"]+)", line (\d+)"#).ok()?;
+        let location_re = Regex::new(r#"File "([^"]+)", line (\d+)"#).ok();
 
-        if let Some(captures) = location_re.captures(error_message) {
-            let file_path = captures.get(1)?.as_str().to_string();
-            let line_number = captures.get(2)?.as_str().parse::<u32>().ok()?;
-            return (Some(line_number), Some(file_path));
+        if let Some(re) = location_re {
+            if let Some(captures) = re.captures(error_message) {
+                let file_path = captures.get(1).unwrap().as_str().to_string();
+                let line_number = captures
+                    .get(2)
+                    .unwrap()
+                    .as_str()
+                    .parse::<u32>()
+                    .unwrap_or(0);
+                return (Some(line_number), Some(file_path));
+            }
         }
 
         (None, None)

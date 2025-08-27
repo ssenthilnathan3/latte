@@ -1,10 +1,12 @@
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader};
 use std::process::{Child, Command, Stdio};
+use std::process::{ChildStderr, ChildStdout};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::{Duration, Instant};
+use std::time::{Duration, SystemTime};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProcessInfo {
@@ -13,8 +15,8 @@ pub struct ProcessInfo {
     pub args: Vec<String>,
     pub working_dir: String,
     pub status: ProcessStatus,
-    pub start_time: Instant,
     pub pid: Option<u32>,
+    pub start_time: SystemTime,
     pub output_lines: Vec<String>,
     pub error_lines: Vec<String>,
 }
@@ -30,13 +32,13 @@ pub enum ProcessStatus {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogLine {
-    pub timestamp: Instant,
+    pub timestamp: SystemTime,
     pub level: LogLevel,
     pub content: String,
     pub source: LogSource,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum LogLevel {
     Info,
     Warning,
@@ -80,7 +82,7 @@ impl ProcessManager {
     ) -> Result<String, String> {
         let full_command = format!("bench {}", command);
         let mut cmd_args = vec![command.to_string()];
-        cmd_args.extend(args);
+        cmd_args.extend(args.clone());
 
         let mut child = Command::new("bench")
             .args(&cmd_args)
@@ -98,26 +100,28 @@ impl ProcessManager {
             args: cmd_args,
             working_dir: bench_path.to_string(),
             status: ProcessStatus::Starting,
-            start_time: Instant::now(),
+            start_time: SystemTime::now(),
             pid: Some(pid),
             output_lines: Vec::new(),
             error_lines: Vec::new(),
         };
 
+        // Start monitoring threads before moving child into ProcessHandle
+        self.start_output_monitoring(&id, child);
+
+        // Store the process after monitoring is set up
         let process_handle = ProcessHandle {
             info: process_info,
-            child: Some(child),
+            child: None, // Child is consumed by start_output_monitoring; process_monitoring will check status
             log_lines: Vec::new(),
         };
 
-        // Store the process
         {
             let mut processes = self.processes.lock().unwrap();
             processes.insert(id.clone(), process_handle);
         }
 
-        // Start monitoring threads
-        self.start_output_monitoring(&id);
+        // Start process monitoring
         self.start_process_monitoring(&id);
 
         Ok(id)
@@ -146,85 +150,121 @@ impl ProcessManager {
             args,
             working_dir: working_dir.to_string(),
             status: ProcessStatus::Starting,
-            start_time: Instant::now(),
+            start_time: SystemTime::now(),
             pid: Some(pid),
             output_lines: Vec::new(),
             error_lines: Vec::new(),
         };
 
+        // Start monitoring threads before moving child into ProcessHandle
+        self.start_output_monitoring(&id, child);
+
+        // Store the process after monitoring is set up
         let process_handle = ProcessHandle {
             info: process_info,
-            child: Some(child),
+            child: None, // Child is consumed by start_output_monitoring
             log_lines: Vec::new(),
         };
 
-        // Store the process
         {
             let mut processes = self.processes.lock().unwrap();
             processes.insert(id.clone(), process_handle);
         }
 
-        // Start monitoring
-        self.start_output_monitoring(&id);
+        // Start process monitoring
         self.start_process_monitoring(&id);
 
         Ok(id)
     }
 
-    fn start_output_monitoring(&self, process_id: &str) {
+    fn start_output_monitoring(&self, process_id: &str, child: Child) {
         let processes_ref = Arc::clone(&self.processes);
         let id = process_id.to_string();
         let buffer_size = self.log_buffer_size;
 
-        thread::spawn(move || {
-            // Monitor stdout
-            let stdout_processes = Arc::clone(&processes_ref);
-            let stdout_id = id.clone();
-            thread::spawn(move || {
-                Self::monitor_stream(stdout_processes, stdout_id, LogSource::Stdout, buffer_size);
-            });
+        // Store the child in ProcessHandle
+        {
+            let mut processes = processes_ref.lock().unwrap();
+            if let Some(handle) = processes.get_mut(&id) {
+                handle.child = Some(child);
+            }
+        }
 
-            // Monitor stderr
-            let stderr_processes = Arc::clone(&processes_ref);
-            let stderr_id = id.clone();
-            thread::spawn(move || {
-                Self::monitor_stream(stderr_processes, stderr_id, LogSource::Stderr, buffer_size);
-            });
+        // Clone Arc for stdout monitoring
+        let stdout_processes = Arc::clone(&processes_ref);
+        let stdout_id = id.clone();
+        thread::spawn(move || {
+            if let Some(mut child) = {
+                let mut processes = stdout_processes.lock().unwrap();
+                processes
+                    .get_mut(&stdout_id)
+                    .and_then(|handle| handle.child.take())
+            } {
+                ProcessManager::monitor_stream(
+                    &stdout_processes,
+                    &stdout_id,
+                    LogSource::Stdout,
+                    &mut child,
+                    buffer_size,
+                );
+                // Restore child
+                let mut processes = stdout_processes.lock().unwrap();
+                if let Some(handle) = processes.get_mut(&stdout_id) {
+                    handle.child = Some(child);
+                }
+            }
+        });
+
+        // Clone Arc for stderr monitoring
+        let stderr_processes = Arc::clone(&processes_ref);
+        let stderr_id = id.clone();
+        thread::spawn(move || {
+            if let Some(mut child) = {
+                let mut processes = stderr_processes.lock().unwrap();
+                processes
+                    .get_mut(&stderr_id)
+                    .and_then(|handle| handle.child.take())
+            } {
+                ProcessManager::monitor_stream(
+                    &stderr_processes,
+                    &stderr_id,
+                    LogSource::Stderr,
+                    &mut child,
+                    buffer_size,
+                );
+                // Restore child
+                let mut processes = stderr_processes.lock().unwrap();
+                if let Some(handle) = processes.get_mut(&stderr_id) {
+                    handle.child = Some(child);
+                }
+            }
         });
     }
 
     fn monitor_stream(
-        processes: Arc<Mutex<HashMap<String, ProcessHandle>>>,
-        process_id: String,
+        processes: &Arc<Mutex<HashMap<String, ProcessHandle>>>,
+        process_id: &String,
         source: LogSource,
+        child: &mut Child,
         buffer_size: usize,
     ) {
-        let reader = {
-            let mut proc_map = processes.lock().unwrap();
-            if let Some(handle) = proc_map.get_mut(&process_id) {
-                if let Some(ref mut child) = handle.child {
-                    match source {
-                        LogSource::Stdout => {
-                            if let Some(stdout) = child.stdout.take() {
-                                Some(BufReader::new(stdout))
-                            } else {
-                                None
-                            }
-                        }
-                        LogSource::Stderr => {
-                            if let Some(stderr) = child.stderr.take() {
-                                Some(BufReader::new(stderr))
-                            } else {
-                                None
-                            }
-                        }
-                        _ => None,
-                    }
+        let reader: Option<Box<dyn BufRead>> = match source {
+            LogSource::Stdout => {
+                if let Some(stdout) = child.stdout.take() {
+                    Some(Box::new(BufReader::new(stdout)) as Box<dyn BufRead>)
                 } else {
                     None
                 }
-            } else {
-                None
+            }
+            LogSource::Stderr => {
+                if let Some(stderr) = child.stderr.take() {
+                    Some(Box::new(BufReader::new(stderr)) as Box<dyn BufRead>)
+                } else {
+                    None
+                }
+            }
+            LogSource::System => {
+                None // System logs not handled via child process
             }
         };
 
@@ -235,15 +275,15 @@ impl ProcessManager {
                     Ok(0) => break, // EOF
                     Ok(_) => {
                         let log_line = LogLine {
-                            timestamp: Instant::now(),
-                            level: Self::detect_log_level(&line),
+                            timestamp: SystemTime::now(),
+                            level: ProcessManager::detect_log_level(&line),
                             content: line.trim_end().to_string(),
                             source: source.clone(),
                         };
 
                         // Add to process logs
                         let mut proc_map = processes.lock().unwrap();
-                        if let Some(handle) = proc_map.get_mut(&process_id) {
+                        if let Some(handle) = proc_map.get_mut(process_id) {
                             handle.log_lines.push(log_line);
 
                             // Also add to the info for quick access
@@ -254,7 +294,9 @@ impl ProcessManager {
                                 LogSource::Stderr => {
                                     handle.info.error_lines.push(line.trim_end().to_string());
                                 }
-                                _ => {}
+                                LogSource::System => {
+                                    handle.info.output_lines.push(line.trim_end().to_string());
+                                }
                             }
 
                             // Keep buffer size manageable
@@ -504,7 +546,7 @@ impl ProcessManager {
 
     fn parse_error_line(&self, line: &str) -> Option<ClickableError> {
         // Pattern to match Python traceback file references
-        let file_pattern = regex::Regex::new(r#"File "([^"]+)", line (\d+)"#).ok()?;
+        let file_pattern = Regex::new(r#"File "([^"]+)", line (\d+)"#).ok()?;
 
         if let Some(captures) = file_pattern.captures(line) {
             let file_path = captures.get(1)?.as_str().to_string();
@@ -519,7 +561,7 @@ impl ProcessManager {
         }
 
         // Pattern to match JavaScript/Node.js errors
-        let js_pattern = regex::Regex::new(r"at ([^(]+) \(([^:]+):(\d+):(\d+)\)").ok()?;
+        let js_pattern = Regex::new(r"at ([^(]+) \(([^:]+):(\d+):(\d+)\)").ok()?;
 
         if let Some(captures) = js_pattern.captures(line) {
             let file_path = captures.get(2)?.as_str().to_string();

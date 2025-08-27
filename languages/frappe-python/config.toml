@@ -1,24 +1,89 @@
 name = "Frappe Python"
-grammar = "python"
+grammar = "python"                                                  # inherit syntax highlighting from Python
 path_suffixes = ["py"]
 line_comments = ["# "]
 tab_size = 4
+auto_indent = true
+indent_unit = "    "
 hard_tabs = false
-first_line_pattern = "^#.*frappe"
+first_line_pattern = "^#.*frappe|^import\\s+frappe|^from\\s+frappe"
+
+[grammars.python]
+repository = "https://github.com/tree-sitter/tree-sitter-python"
+rev = "4bfdd9033a2225cc95032ce77066b7aeca9e2efc"
 
 [language_servers.pylsp]
-name = "pylsp"
-language_ids = ["python"]
+command = "pylsp"
+
+[language_servers.pylsp.environment]
+PYTHONPATH = "${workspaceRoot}/apps:${workspaceRoot}"
+
+[language_servers.pylsp.initialization_options]
+pylint = true
+pyflakes = true
+rope_completion = true
+pycodestyle.ignore = ["E402", "W503"]
+pycodestyle.maxLineLength = 120
+
+[smart_indent]
+# Frappe-specific indent rules
+increase_indent_after = [
+    "^\\s*@frappe\\.whitelist\\(\\)\\s*$",
+    "^\\s*def\\s+validate\\s*\\(.*\\):\\s*$",
+    "^\\s*def\\s+before_insert\\s*\\(.*\\):\\s*$",
+    "^\\s*def\\s+after_insert\\s*\\(.*\\):\\s*$",
+    "^\\s*def\\s+on_submit\\s*\\(.*\\):\\s*$",
+    "^\\s*def\\s+on_cancel\\s*\\(.*\\):\\s*$",
+    "^\\s*def\\s+on_update\\s*\\(.*\\):\\s*$",
+]
 
 [formatter]
-external = { command = "black", arguments = [
-    "--stdin-filename",
-    "{buffer_path}",
-    "-",
-] }
+command = "black"
+arguments = ["--stdin-filename", "{buffer_path}", "-", "--line-length=120"]
 
 [code_actions]
-# Enable Frappe-specific code actions
+# Frappe-specific code actions
 frappe_hooks = true
 frappe_migrations = true
 frappe_doctypes = true
+
+[file_types]
+doctype = "*.json"
+report = "*.js"
+web_form = "*.json"
+print_format = "*.html"
+workspace = "*.json"
+
+[snippets]
+new_doctype = """def ${1:doctype_name}(${2:doctype}):
+    frappe.get_doc({
+        "doctype": "${2:doctype}",
+        "name": "${3:name}",
+        ${4:fields}
+    }).insert()"""
+
+whitelist_method = """@frappe.whitelist()
+def ${1:method_name}(${2:args}):
+    ${3:# method body}"""
+
+validate_method = """def validate(self):
+    ${1:# validation logic}"""
+
+get_list = """frappe.get_list("${1:doctype}",
+    filters=${2:filters},
+    fields=${3:fields}
+)"""
+
+new_report = """def execute(filters=None):
+    columns, data = [], []
+    columns = get_columns()
+    data = get_data(filters)
+    return columns, data
+
+def get_columns():
+    return [
+        ${1:columns}
+    ]
+
+def get_data(filters):
+    ${2:# data fetching logic}"""

@@ -6,6 +6,7 @@ schema_version = 1
 authors = ["Latte Contributors"]
 repository = "https://github.com/frappe/zed-latte"
 
+# Grammars
 [grammars.python]
 repository = "https://github.com/tree-sitter/tree-sitter-python"
 rev = "4bfdd9033a2225cc95032ce77066b7aeca9e2efc"
@@ -20,8 +21,38 @@ rev = "73076754005a460947cafe8e03a8cf5fa4fa2938"
 
 [grammars.html]
 repository = "https://github.com/tree-sitter/tree-sitter-html"
-rev = "29f53d8f4f2335e61bf6418ab8958dac3282077a"
+rev = "cbb91a0ff3621245e890d1c50cc811bffb77a26b"
+no_external_scanner = true
 
 [grammars.css]
 repository = "https://github.com/tree-sitter/tree-sitter-css"
 rev = "769203d0f9abe1a9a691ac2b9fe4bb4397a73c51"
+
+# Commands
+[commands.latte_start_dev_server]
+label = "Latte: Start Frappe Dev Server"
+description = "Starts the Frappe development server in the current workspace."
+
+[commands.latte_stop_process]
+label = "Latte: Stop Frappe Process"
+description = "Stops a running Frappe process by ID."
+
+[commands.latte_run_migrate]
+label = "Latte: Run Frappe Migration"
+description = "Runs a Frappe migration for a specified site."
+
+[commands.latte_create_app]
+label = "Latte: Create New Frappe App"
+description = "Creates a new Frappe app in the current bench."
+
+[commands.latte_create_site]
+label = "Latte: Create New Frappe Site"
+description = "Creates a new Frappe site in the current bench."
+
+[commands.latte_open_console]
+label = "Latte: Open Frappe Console"
+description = "Opens an interactive Frappe console for a site."
+
+[commands.latte_open_mariadb]
+label = "Latte: Open MariaDB Console"
+description = "Opens a MariaDB console for a Frappe site."

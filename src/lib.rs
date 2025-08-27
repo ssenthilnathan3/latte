@@ -1,16 +1,17 @@
 use std::collections::HashMap;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::time::SystemTime;
 use zed_extension_api::{
-    self as zed, register_extension, Command, Extension, LanguageServerId, Result, SlashCommand,
-    SlashCommandArgumentCompletion, SlashCommandOutput, SlashCommandResult, Worktree,
+    self as zed, register_extension, Extension, Result, SlashCommand,
+    SlashCommandArgumentCompletion, SlashCommandOutput, Worktree,
 };
 
 mod frappe_utils;
 mod process_manager;
 mod test_runner;
 
-use frappe_utils::{generate_field_suggestions, FrappeAnalyzer};
+use frappe_utils::FrappeAnalyzer;
 use process_manager::ProcessManager;
 use test_runner::TestRunner;
 
@@ -28,29 +29,19 @@ struct FrappeConfig {
     sites_path: String,
 }
 
-impl Default for LatteExtension {
-    fn default() -> Self {
+impl Extension for LatteExtension {
+    fn new() -> Self {
         Self {
             cached_frappe_config: None,
             frappe_analyzer: FrappeAnalyzer::new(),
             process_manager: ProcessManager::new(),
         }
     }
-}
-
-impl Extension for LatteExtension {
-    fn new() -> Self {
-        Self::default()
-    }
-
-    fn name(&self) -> &'static str {
-        "Latte"
-    }
 
     fn complete_slash_command_argument(
         &self,
         command: SlashCommand,
-        _args: Vec<String>,
+        args: Vec<String>,
     ) -> Result<Vec<SlashCommandArgumentCompletion>, String> {
         match command.name.as_str() {
             "frappe-new-app" => Ok(vec![SlashCommandArgumentCompletion {
@@ -83,8 +74,9 @@ impl Extension for LatteExtension {
         &self,
         command: SlashCommand,
         args: Vec<String>,
-        worktree: &Worktree,
-    ) -> Result<SlashCommandResult, String> {
+        worktree: Option<&Worktree>,
+    ) -> Result<SlashCommandOutput, String> {
+        let worktree = worktree.ok_or("No worktree provided".to_string())?;
         match command.name.as_str() {
             "frappe-bench-start" => self.run_bench_command("start", &[], worktree),
             "frappe-bench-stop" => self.stop_bench_process(worktree),
@@ -136,10 +128,15 @@ impl Extension for LatteExtension {
             _ => Err(format!("Unknown command: {}", command.name)),
         }
     }
+}
+
+impl LatteExtension {
+    fn name(&self) -> &'static str {
+        "Latte"
+    }
 
     fn slash_commands(&self) -> Vec<SlashCommand> {
         vec![
-            // Bench Commands
             SlashCommand {
                 name: "frappe-bench-start".to_string(),
                 description: "Start the Frappe bench development server".to_string(),
@@ -188,7 +185,6 @@ impl Extension for LatteExtension {
                 tooltip_text: "Opens database console connected to current site".to_string(),
                 requires_argument: false,
             },
-            // Generators
             SlashCommand {
                 name: "frappe-new-doctype".to_string(),
                 description: "Generate a new DocType".to_string(),
@@ -240,24 +236,21 @@ impl Extension for LatteExtension {
             },
         ]
     }
-}
 
-impl LatteExtension {
     fn detect_frappe_workspace(&self, worktree: &Worktree) -> Option<FrappeConfig> {
-        let worktree_path = worktree.abs_path();
-
-        // Check for common Frappe indicators
-        let apps_txt = worktree_path.join("apps.txt");
-        let sites_dir = worktree_path.join("sites");
-        let procfile = worktree_path.join("Procfile");
+        let worktree_path = worktree.root_path();
+        let worktree_path_buf = PathBuf::from(&worktree_path);
+        let apps_txt = worktree_path_buf.join("apps.txt");
+        let sites_dir = worktree_path_buf.join("sites");
+        let procfile = worktree_path_buf.join("Procfile");
 
         if apps_txt.exists() && sites_dir.exists() {
-            let default_site = self.get_default_site(&worktree_path);
+            let default_site = self.get_default_site(&worktree_path_buf);
 
             Some(FrappeConfig {
-                bench_path: worktree_path.to_string_lossy().to_string(),
+                bench_path: worktree_path,
                 default_site,
-                apps_path: worktree_path.join("apps").to_string_lossy().to_string(),
+                apps_path: worktree_path_buf.join("apps").to_string_lossy().to_string(),
                 sites_path: sites_dir.to_string_lossy().to_string(),
             })
         } else {
@@ -267,7 +260,7 @@ impl LatteExtension {
 
     fn get_default_site(&self, bench_path: &Path) -> Option<String> {
         let common_site_path = bench_path.join("sites").join("common_site_config.json");
-        if let Ok(content) = fs::read_to_string(common_site_path) {
+        if let Ok(content) = fs::read_to_string(&common_site_path) {
             if let Ok(config) = serde_json::from_str::<serde_json::Value>(&content) {
                 if let Some(default_site) = config.get("default_site") {
                     return default_site.as_str().map(|s| s.to_string());
@@ -282,10 +275,10 @@ impl LatteExtension {
         cmd: &str,
         args: &[&str],
         worktree: &Worktree,
-    ) -> Result<SlashCommandResult, String> {
+    ) -> Result<SlashCommandOutput, String> {
         let config = self
             .detect_frappe_workspace(worktree)
-            .ok_or("Not a Frappe workspace")?;
+            .ok_or("Not a Frappe workspace".to_string())?;
 
         let args_vec: Vec<String> = args.iter().map(|s| s.to_string()).collect();
 
@@ -323,75 +316,75 @@ impl LatteExtension {
 
         match process_id {
             Ok(id) => {
-                let output = format!(
+                let text = format!(
                     "✅ Started bench {} (Process ID: {})\nBench Path: {}\nCheck logs for details.",
                     cmd, id, config.bench_path
                 );
-                Ok(SlashCommandResult {
-                    text: output,
-                    run_commands_in_text: false,
+                Ok(SlashCommandOutput {
+                    text,
+                    sections: vec![],
                 })
             }
             Err(e) => Err(format!("Failed to start bench {}: {}", cmd, e)),
         }
     }
 
-    fn stop_bench_process(&self, _worktree: &Worktree) -> Result<SlashCommandResult, String> {
+    fn stop_bench_process(&self, _worktree: &Worktree) -> Result<SlashCommandOutput, String> {
         if let Some(bench_process_id) = self.process_manager.get_bench_process_id() {
             match self.process_manager.stop_process(&bench_process_id) {
-                Ok(()) => Ok(SlashCommandResult {
+                Ok(()) => Ok(SlashCommandOutput {
                     text: "✅ Bench process stopped successfully".to_string(),
-                    run_commands_in_text: false,
+                    sections: vec![],
                 }),
                 Err(e) => Err(format!("Failed to stop bench process: {}", e)),
             }
         } else {
-            Ok(SlashCommandResult {
+            Ok(SlashCommandOutput {
                 text: "ℹ️ No bench process is currently running".to_string(),
-                run_commands_in_text: false,
+                sections: vec![],
             })
         }
     }
 
-    fn open_frappe_console(&self, worktree: &Worktree) -> Result<SlashCommandResult, String> {
+    fn open_frappe_console(&self, worktree: &Worktree) -> Result<SlashCommandOutput, String> {
         let config = self
             .detect_frappe_workspace(worktree)
-            .ok_or("Not a Frappe workspace")?;
+            .ok_or("Not a Frappe workspace".to_string())?;
 
         let site = config
             .default_site
             .unwrap_or_else(|| "localhost".to_string());
 
         match self.process_manager.open_console(&config.bench_path, &site) {
-            Ok(process_id) => Ok(SlashCommandResult {
+            Ok(process_id) => Ok(SlashCommandOutput {
                 text: format!(
                     "🔧 Opening Frappe console for site: {} (Process ID: {})\nType your Python commands in the console.",
                     site, process_id
                 ),
-                run_commands_in_text: false,
+                sections: vec![],
             }),
-            Err(e) => Err(format!("Failed to open console: {}", e))
+            Err(e) => Err(format!("Failed to open console: {}", e)),
         }
     }
 
-    fn open_mariadb_repl(&self, worktree: &Worktree) -> Result<SlashCommandResult, String> {
+    fn open_mariadb_repl(&self, worktree: &Worktree) -> Result<SlashCommandOutput, String> {
         let config = self
             .detect_frappe_workspace(worktree)
-            .ok_or("Not a Frappe workspace")?;
+            .ok_or("Not a Frappe workspace".to_string())?;
 
         let site = config
             .default_site
             .unwrap_or_else(|| "localhost".to_string());
 
         match self.process_manager.open_mariadb(&config.bench_path, &site) {
-            Ok(process_id) => Ok(SlashCommandResult {
+            Ok(process_id) => Ok(SlashCommandOutput {
                 text: format!(
                     "🗄️ Opening MariaDB console for site: {} (Process ID: {})\nYou can now run SQL queries directly.",
                     site, process_id
                 ),
-                run_commands_in_text: false,
+                sections: vec![],
             }),
-            Err(e) => Err(format!("Failed to open MariaDB console: {}", e))
+            Err(e) => Err(format!("Failed to open MariaDB console: {}", e)),
         }
     }
 
@@ -400,28 +393,24 @@ impl LatteExtension {
         doctype_name: &str,
         module: &str,
         worktree: &Worktree,
-    ) -> Result<SlashCommandResult, String> {
+    ) -> Result<SlashCommandOutput, String> {
         let config = self
             .detect_frappe_workspace(worktree)
-            .ok_or("Not a Frappe workspace")?;
+            .ok_or("Not a Frappe workspace".to_string())?;
 
-        // Generate DocType JSON
         let doctype_json = self.create_doctype_json(doctype_name, module);
         let controller_py = self.create_doctype_controller(doctype_name, module);
         let client_js = self.create_doctype_client_script(doctype_name);
 
-        let output = format!(
+        let snake_case = doctype_name.to_lowercase().replace(" ", "_");
+        let text = format!(
             "Generated DocType: {}\nModule: {}\nFiles created:\n- {}.json\n- {}.py\n- {}.js",
-            doctype_name,
-            module,
-            doctype_name.to_lowercase().replace(" ", "_"),
-            doctype_name.to_lowercase().replace(" ", "_"),
-            doctype_name.to_lowercase().replace(" ", "_")
+            doctype_name, module, snake_case, snake_case, snake_case
         );
 
-        Ok(SlashCommandResult {
-            text: output,
-            run_commands_in_text: false,
+        Ok(SlashCommandOutput {
+            text,
+            sections: vec![],
         })
     }
 
@@ -429,22 +418,20 @@ impl LatteExtension {
         &self,
         page_name: &str,
         worktree: &Worktree,
-    ) -> Result<SlashCommandResult, String> {
+    ) -> Result<SlashCommandOutput, String> {
         let config = self
             .detect_frappe_workspace(worktree)
-            .ok_or("Not a Frappe workspace")?;
+            .ok_or("Not a Frappe workspace".to_string())?;
 
-        let output = format!(
+        let snake_case = page_name.to_lowercase().replace(" ", "_");
+        let text = format!(
             "Generated Page: {}\nFiles created:\n- {}.py\n- {}.js\n- {}.json",
-            page_name,
-            page_name.to_lowercase().replace(" ", "_"),
-            page_name.to_lowercase().replace(" ", "_"),
-            page_name.to_lowercase().replace(" ", "_")
+            page_name, snake_case, snake_case, snake_case
         );
 
-        Ok(SlashCommandResult {
-            text: output,
-            run_commands_in_text: false,
+        Ok(SlashCommandOutput {
+            text,
+            sections: vec![],
         })
     }
 
@@ -452,29 +439,27 @@ impl LatteExtension {
         &self,
         report_name: &str,
         worktree: &Worktree,
-    ) -> Result<SlashCommandResult, String> {
+    ) -> Result<SlashCommandOutput, String> {
         let config = self
             .detect_frappe_workspace(worktree)
-            .ok_or("Not a Frappe workspace")?;
+            .ok_or("Not a Frappe workspace".to_string())?;
 
-        let output = format!(
+        let snake_case = report_name.to_lowercase().replace(" ", "_");
+        let text = format!(
             "Generated Report: {}\nFiles created:\n- {}.py\n- {}.js\n- {}.json",
-            report_name,
-            report_name.to_lowercase().replace(" ", "_"),
-            report_name.to_lowercase().replace(" ", "_"),
-            report_name.to_lowercase().replace(" ", "_")
+            report_name, snake_case, snake_case, snake_case
         );
 
-        Ok(SlashCommandResult {
-            text: output,
-            run_commands_in_text: false,
+        Ok(SlashCommandOutput {
+            text,
+            sections: vec![],
         })
     }
 
-    fn run_tests(&self, app: &str, worktree: &Worktree) -> Result<SlashCommandResult, String> {
+    fn run_tests(&self, app: &str, worktree: &Worktree) -> Result<SlashCommandOutput, String> {
         let config = self
             .detect_frappe_workspace(worktree)
-            .ok_or("Not a Frappe workspace")?;
+            .ok_or("Not a Frappe workspace".to_string())?;
 
         let site = config
             .default_site
@@ -485,23 +470,21 @@ impl LatteExtension {
         match test_runner.run_app_tests(app) {
             Ok(test_suite) => {
                 let summary = test_runner.format_test_summary(&test_suite);
-
-                // Extract diagnostics for failed tests
                 let diagnostics = test_runner.extract_diagnostics(&test_suite.results);
 
-                let mut output = format!("🧪 Test Results for app: {}\n\n", app);
-                output.push_str(&summary);
+                let mut text = format!("🧪 Test Results for app: {}\n\n", app);
+                text.push_str(&summary);
 
                 if !diagnostics.is_empty() {
-                    output.push_str(&format!(
+                    text.push_str(&format!(
                         "\n📋 {} diagnostics generated for failed tests",
                         diagnostics.len()
                     ));
                 }
 
-                Ok(SlashCommandResult {
-                    text: output,
-                    run_commands_in_text: false,
+                Ok(SlashCommandOutput {
+                    text,
+                    sections: vec![],
                 })
             }
             Err(e) => Err(format!("Failed to run tests: {}", e)),
@@ -509,9 +492,7 @@ impl LatteExtension {
     }
 
     fn create_doctype_json(&self, name: &str, module: &str) -> String {
-        let snake_case = name.to_lowercase().replace(" ", "_");
-
-        // Generate smart field suggestions
+        let _snake_case = name.to_lowercase().replace(" ", "_");
         let suggested_fields = self.generate_smart_fields(name);
         let fields_json = suggested_fields
             .iter()
@@ -587,7 +568,6 @@ impl LatteExtension {
     fn generate_smart_fields(&self, doctype_name: &str) -> Vec<(String, String, String)> {
         let mut fields = Vec::new();
 
-        // Always start with a name field
         let name_field = if doctype_name.to_lowercase().contains("item") {
             (
                 "item_name".to_string(),
@@ -599,7 +579,6 @@ impl LatteExtension {
         };
         fields.push(name_field);
 
-        // Add common fields based on DocType name patterns
         let doctype_lower = doctype_name.to_lowercase();
 
         if doctype_lower.contains("customer") || doctype_lower.contains("supplier") {
@@ -651,7 +630,6 @@ impl LatteExtension {
             ));
         }
 
-        // Always add common audit fields
         fields.push((
             "is_active".to_string(),
             "Check".to_string(),
@@ -666,8 +644,8 @@ impl LatteExtension {
         fields
     }
 
-    fn create_doctype_controller(&self, name: &str, module: &str) -> String {
-        let snake_case = name.to_lowercase().replace(" ", "_");
+    fn create_doctype_controller(&self, name: &str, _module: &str) -> String {
+        let _snake_case = name.to_lowercase().replace(" ", "_");
         format!(
             r#"# Copyright (c) 2024, Frappe Technologies and contributors
 # For license information, please see license.txt
@@ -740,26 +718,26 @@ frappe.ui.form.on('{}', {{
         &self,
         query: &str,
         worktree: &Worktree,
-    ) -> Result<SlashCommandResult, String> {
-        // Analyze project if not already done
+    ) -> Result<SlashCommandOutput, String> {
         let mut analyzer = FrappeAnalyzer::new();
-        if let Err(_) = analyzer.analyze_project(&worktree.abs_path()) {
+        let root_path_str = worktree.root_path(); // own the String
+        let root_path = Path::new(&root_path_str); // borrow from the owned String
+        if let Err(_) = analyzer.analyze_project(root_path) {
             return Err("Failed to analyze Frappe project".to_string());
         }
 
         let results = analyzer.search_doctypes(query);
 
         if results.is_empty() {
-            return Ok(SlashCommandResult {
+            return Ok(SlashCommandOutput {
                 text: format!("No DocTypes found matching '{}'", query),
-                run_commands_in_text: false,
+                sections: vec![],
             });
         }
 
-        let mut output = format!("Found {} DocTypes matching '{}':\n\n", results.len(), query);
+        let mut text = format!("Found {} DocTypes matching '{}':\n\n", results.len(), query);
         for doctype in results.iter().take(10) {
-            // Limit to first 10 results
-            output.push_str(&format!(
+            text.push_str(&format!(
                 "• {} (Module: {})\n  Path: {}\n  Fields: {}\n\n",
                 doctype.name,
                 doctype.module,
@@ -769,34 +747,35 @@ frappe.ui.form.on('{}', {{
         }
 
         if results.len() > 10 {
-            output.push_str(&format!("... and {} more results\n", results.len() - 10));
+            text.push_str(&format!("... and {} more results\n", results.len() - 10));
         }
 
-        Ok(SlashCommandResult {
-            text: output,
-            run_commands_in_text: false,
+        Ok(SlashCommandOutput {
+            text,
+            sections: vec![],
         })
     }
 
-    fn analyze_current_project(&self, worktree: &Worktree) -> Result<SlashCommandResult, String> {
+    fn analyze_current_project(&self, worktree: &Worktree) -> Result<SlashCommandOutput, String> {
         let mut analyzer = FrappeAnalyzer::new();
-
-        match analyzer.analyze_project(&worktree.abs_path()) {
+        let root_path_str = worktree.root_path(); // own the String
+        let root_path = Path::new(&root_path_str); // borrow from the owned String
+        match analyzer.analyze_project(root_path) {
             Ok(_) => {
                 if let Some(project) = analyzer.get_project() {
-                    let mut output = format!("📊 Frappe Project Analysis\n");
-                    output.push_str(&format!(
+                    let mut text = format!("📊 Frappe Project Analysis\n");
+                    text.push_str(&format!(
                         "📁 Bench Path: {}\n",
                         project.bench_path.display()
                     ));
-                    output.push_str(&format!(
+                    text.push_str(&format!(
                         "🌐 Default Site: {}\n\n",
                         project.default_site.as_deref().unwrap_or("Not configured")
                     ));
 
-                    output.push_str(&format!("📱 Apps ({}):\n", project.apps.len()));
+                    text.push_str(&format!("📱 Apps ({}):\n", project.apps.len()));
                     for app in &project.apps {
-                        output.push_str(&format!(
+                        text.push_str(&format!(
                             "  • {} ({} DocTypes, {} Pages, {} Reports)\n",
                             app.name,
                             app.doctypes.len(),
@@ -805,21 +784,19 @@ frappe.ui.form.on('{}', {{
                         ));
                     }
 
-                    output.push_str(&format!("\n🏢 Sites ({}):\n", project.sites.len()));
+                    text.push_str(&format!("\n🏢 Sites ({}):\n", project.sites.len()));
                     for site in &project.sites {
-                        output.push_str(&format!(
+                        text.push_str(&format!(
                             "  • {} (DB: {})\n",
                             site.name,
                             site.database.as_deref().unwrap_or("Unknown")
                         ));
                     }
 
-                    // DocType summary
                     let total_doctypes: usize = project.apps.iter().map(|a| a.doctypes.len()).sum();
                     if total_doctypes > 0 {
-                        output.push_str(&format!("\n📋 Total DocTypes: {}\n", total_doctypes));
+                        text.push_str(&format!("\n📋 Total DocTypes: {}\n", total_doctypes));
 
-                        // Find most common field types
                         let mut field_types = HashMap::new();
                         for app in &project.apps {
                             for doctype in &app.doctypes {
@@ -832,15 +809,15 @@ frappe.ui.form.on('{}', {{
                         let mut sorted_types: Vec<_> = field_types.into_iter().collect();
                         sorted_types.sort_by(|a, b| b.1.cmp(&a.1));
 
-                        output.push_str("📊 Top Field Types:\n");
+                        text.push_str("📊 Top Field Types:\n");
                         for (field_type, count) in sorted_types.iter().take(5) {
-                            output.push_str(&format!("  • {}: {}\n", field_type, count));
+                            text.push_str(&format!("  • {}: {}\n", field_type, count));
                         }
                     }
 
-                    Ok(SlashCommandResult {
-                        text: output,
-                        run_commands_in_text: false,
+                    Ok(SlashCommandOutput {
+                        text,
+                        sections: vec![],
                     })
                 } else {
                     Err("Failed to get project information".to_string())
@@ -850,21 +827,24 @@ frappe.ui.form.on('{}', {{
         }
     }
 
-    fn list_running_processes(&self) -> Result<SlashCommandResult, String> {
+    fn list_running_processes(&self) -> Result<SlashCommandOutput, String> {
         let processes = self.process_manager.list_running_processes();
 
         if processes.is_empty() {
-            return Ok(SlashCommandResult {
+            return Ok(SlashCommandOutput {
                 text: "ℹ️ No Frappe processes are currently running".to_string(),
-                run_commands_in_text: false,
+                sections: vec![],
             });
         }
 
-        let mut output = format!("🔄 Running Processes ({})\n\n", processes.len());
-
+        let mut text = format!("🔄 Running Processes ({})\n\n", processes.len());
         for process in processes {
-            let duration = process.start_time.elapsed().as_secs();
-            output.push_str(&format!(
+            let duration = process
+                .start_time
+                .elapsed()
+                .unwrap_or(std::time::Duration::ZERO)
+                .as_secs();
+            text.push_str(&format!(
                 "🟢 {} (PID: {})\n",
                 process.id,
                 process
@@ -872,27 +852,27 @@ frappe.ui.form.on('{}', {{
                     .map(|p| p.to_string())
                     .unwrap_or("N/A".to_string())
             ));
-            output.push_str(&format!("   Command: {}\n", process.command));
-            output.push_str(&format!("   Running for: {}s\n", duration));
-            output.push_str(&format!("   Status: {:?}\n\n", process.status));
+            text.push_str(&format!("   Command: {}\n", process.command));
+            text.push_str(&format!("   Running for: {}s\n", duration));
+            text.push_str(&format!("   Status: {:?}\n\n", process.status));
         }
 
-        Ok(SlashCommandResult {
-            text: output,
-            run_commands_in_text: false,
+        Ok(SlashCommandOutput {
+            text,
+            sections: vec![],
         })
     }
 
-    fn stop_all_processes(&self) -> Result<SlashCommandResult, String> {
+    fn stop_all_processes(&self) -> Result<SlashCommandOutput, String> {
         match self.process_manager.stop_all_processes() {
             Ok(stopped_processes) => {
                 if stopped_processes.is_empty() {
-                    Ok(SlashCommandResult {
+                    Ok(SlashCommandOutput {
                         text: "ℹ️ No processes were running to stop".to_string(),
-                        run_commands_in_text: false,
+                        sections: vec![],
                     })
                 } else {
-                    let output = format!(
+                    let text = format!(
                         "✅ Stopped {} processes:\n{}",
                         stopped_processes.len(),
                         stopped_processes
@@ -901,9 +881,9 @@ frappe.ui.form.on('{}', {{
                             .collect::<Vec<_>>()
                             .join("\n")
                     );
-                    Ok(SlashCommandResult {
-                        text: output,
-                        run_commands_in_text: false,
+                    Ok(SlashCommandOutput {
+                        text,
+                        sections: vec![],
                     })
                 }
             }
