@@ -1,0 +1,329 @@
+{
+  "frappe_form_on": {
+    "prefix": ["form_on", "frappe_form_on"],
+    "body": [
+      "frappe.ui.form.on('${1:DocType}', {",
+      "\t${2:refresh}: function(frm) {",
+      "\t\t${3:// Called when form is refreshed}",
+      "\t}",
+      "});"
+    ],
+    "description": "Frappe form event handler"
+  },
+  "frappe_refresh": {
+    "prefix": ["refresh", "frappe_refresh"],
+    "body": [
+      "refresh: function(frm) {",
+      "\t${1:// Called when form is refreshed}",
+      "}"
+    ],
+    "description": "Frappe form refresh event"
+  },
+  "frappe_onload": {
+    "prefix": ["onload", "frappe_onload"],
+    "body": [
+      "onload: function(frm) {",
+      "\t${1:// Called when form is loaded}",
+      "}"
+    ],
+    "description": "Frappe form onload event"
+  },
+  "frappe_before_save": {
+    "prefix": ["before_save", "frappe_before_save"],
+    "body": [
+      "before_save: function(frm) {",
+      "\t${1:// Called before saving}",
+      "}"
+    ],
+    "description": "Frappe form before_save event"
+  },
+  "frappe_after_save": {
+    "prefix": ["after_save", "frappe_after_save"],
+    "body": [
+      "after_save: function(frm) {",
+      "\t${1:// Called after saving}",
+      "}"
+    ],
+    "description": "Frappe form after_save event"
+  },
+  "frappe_validate": {
+    "prefix": ["validate", "frappe_validate"],
+    "body": [
+      "validate: function(frm) {",
+      "\t${1:// Called during validation}",
+      "}"
+    ],
+    "description": "Frappe form validate event"
+  },
+  "frappe_before_submit": {
+    "prefix": ["before_submit", "frappe_before_submit"],
+    "body": [
+      "before_submit: function(frm) {",
+      "\t${1:// Called before submitting}",
+      "}"
+    ],
+    "description": "Frappe form before_submit event"
+  },
+  "frappe_on_submit": {
+    "prefix": ["on_submit", "frappe_on_submit"],
+    "body": [
+      "on_submit: function(frm) {",
+      "\t${1:// Called after submitting}",
+      "}"
+    ],
+    "description": "Frappe form on_submit event"
+  },
+  "frappe_before_cancel": {
+    "prefix": ["before_cancel", "frappe_before_cancel"],
+    "body": [
+      "before_cancel: function(frm) {",
+      "\t${1:// Called before cancelling}",
+      "}"
+    ],
+    "description": "Frappe form before_cancel event"
+  },
+  "frappe_after_cancel": {
+    "prefix": ["after_cancel", "frappe_after_cancel"],
+    "body": [
+      "after_cancel: function(frm) {",
+      "\t${1:// Called after cancelling}",
+      "}"
+    ],
+    "description": "Frappe form after_cancel event"
+  },
+  "frappe_set_value": {
+    "prefix": ["set_value", "frappe_set_value"],
+    "body": [
+      "frm.set_value('${1:fieldname}', '${2:value}');"
+    ],
+    "description": "Set field value in form"
+  },
+  "frappe_get_value": {
+    "prefix": ["get_value", "frappe_get_value"],
+    "body": [
+      "var value = frm.doc.${1:fieldname};"
+    ],
+    "description": "Get field value from form"
+  },
+  "frappe_set_df_property": {
+    "prefix": ["set_df_property", "frappe_set_df_property"],
+    "body": [
+      "frm.set_df_property('${1:fieldname}', '${2:property}', ${3:value});"
+    ],
+    "description": "Set field property"
+  },
+  "frappe_toggle_display": {
+    "prefix": ["toggle_display", "frappe_toggle_display"],
+    "body": [
+      "frm.toggle_display('${1:fieldname}', ${2:condition});"
+    ],
+    "description": "Toggle field display"
+  },
+  "frappe_toggle_reqd": {
+    "prefix": ["toggle_reqd", "frappe_toggle_reqd"],
+    "body": [
+      "frm.toggle_reqd('${1:fieldname}', ${2:condition});"
+    ],
+    "description": "Toggle field required"
+  },
+  "frappe_toggle_enable": {
+    "prefix": ["toggle_enable", "frappe_toggle_enable"],
+    "body": [
+      "frm.toggle_enable('${1:fieldname}', ${2:condition});"
+    ],
+    "description": "Toggle field enable/disable"
+  },
+  "frappe_add_custom_button": {
+    "prefix": ["add_custom_button", "frappe_add_custom_button"],
+    "body": [
+      "frm.add_custom_button(__('${1:Button Label}'), function() {",
+      "\t${2:// Button action}",
+      "}, __('${3:Group}'));"
+    ],
+    "description": "Add custom button to form"
+  },
+  "frappe_remove_custom_button": {
+    "prefix": ["remove_custom_button", "frappe_remove_custom_button"],
+    "body": [
+      "frm.remove_custom_button('${1:Button Label}', '${2:Group}');"
+    ],
+    "description": "Remove custom button from form"
+  },
+  "frappe_msgprint": {
+    "prefix": ["msgprint", "frappe_msgprint"],
+    "body": [
+      "frappe.msgprint(__('${1:Message}'));"
+    ],
+    "description": "Display message to user"
+  },
+  "frappe_throw": {
+    "prefix": ["throw", "frappe_throw"],
+    "body": [
+      "frappe.throw(__('${1:Error message}'));"
+    ],
+    "description": "Throw error message"
+  },
+  "frappe_confirm": {
+    "prefix": ["confirm", "frappe_confirm"],
+    "body": [
+      "frappe.confirm(",
+      "\t'${1:Are you sure?}',",
+      "\tfunction() {",
+      "\t\t${2:// User clicked Yes}",
+      "\t},",
+      "\tfunction() {",
+      "\t\t${3:// User clicked No}",
+      "\t}",
+      ");"
+    ],
+    "description": "Show confirmation dialog"
+  },
+  "frappe_prompt": {
+    "prefix": ["prompt", "frappe_prompt"],
+    "body": [
+      "frappe.prompt('${1:Enter value}', function(value) {",
+      "\t${2:// Handle user input}",
+      "}, '${3:Title}', '${4:OK}');"
+    ],
+    "description": "Show input prompt"
+  },
+  "frappe_call": {
+    "prefix": ["call", "frappe_call"],
+    "body": [
+      "frappe.call({",
+      "\tmethod: '${1:app.module.function}',",
+      "\targs: {",
+      "\t\t${2:param}: '${3:value}'",
+      "\t},",
+      "\tcallback: function(r) {",
+      "\t\tif (r.message) {",
+      "\t\t\t${4:// Handle response}",
+      "\t\t}",
+      "\t}",
+      "});"
+    ],
+    "description": "Make server call"
+  },
+  "frappe_db_get_value": {
+    "prefix": ["db_get_value", "frappe_db_get_value"],
+    "body": [
+      "frappe.db.get_value('${1:DocType}', '${2:name}', '${3:fieldname}', function(r) {",
+      "\tif (r.message) {",
+      "\t\t${4:// Handle value}",
+      "\t}",
+      "});"
+    ],
+    "description": "Get value from database"
+  },
+  "frappe_db_get_list": {
+    "prefix": ["db_get_list", "frappe_db_get_list"],
+    "body": [
+      "frappe.db.get_list('${1:DocType}', {",
+      "\tfields: ['${2:field1}', '${3:field2}'],",
+      "\tfilters: {",
+      "\t\t${4:field}: '${5:value}'",
+      "\t}",
+      "}).then(function(data) {",
+      "\t${6:// Handle data}",
+      "});"
+    ],
+    "description": "Get list from database"
+  },
+  "frappe_model_get_value": {
+    "prefix": ["model_get_value", "frappe_model_get_value"],
+    "body": [
+      "frappe.model.get_value('${1:DocType}', '${2:name}', '${3:fieldname}');"
+    ],
+    "description": "Get model value"
+  },
+  "frappe_model_set_value": {
+    "prefix": ["model_set_value", "frappe_model_set_value"],
+    "body": [
+      "frappe.model.set_value('${1:doctype}', '${2:name}', '${3:fieldname}', '${4:value}');"
+    ],
+    "description": "Set model value"
+  },
+  "frappe_field_change": {
+    "prefix": ["field_change", "frappe_field_change"],
+    "body": [
+      "${1:fieldname}: function(frm) {",
+      "\t${2:// Called when field value changes}",
+      "}"
+    ],
+    "description": "Field change event"
+  },
+  "frappe_add_child": {
+    "prefix": ["add_child", "frappe_add_child"],
+    "body": [
+      "var child = frm.add_child('${1:table_fieldname}');",
+      "child.${2:field} = '${3:value}';",
+      "frm.refresh_field('${1:table_fieldname}');"
+    ],
+    "description": "Add child table row"
+  },
+  "frappe_clear_table": {
+    "prefix": ["clear_table", "frappe_clear_table"],
+    "body": [
+      "frm.clear_table('${1:table_fieldname}');",
+      "frm.refresh_field('${1:table_fieldname}');"
+    ],
+    "description": "Clear child table"
+  },
+  "frappe_set_query": {
+    "prefix": ["set_query", "frappe_set_query"],
+    "body": [
+      "frm.set_query('${1:fieldname}', function() {",
+      "\treturn {",
+      "\t\tfilters: {",
+      "\t\t\t${2:field}: '${3:value}'",
+      "\t\t}",
+      "\t};",
+      "});"
+    ],
+    "description": "Set field query filters"
+  },
+  "frappe_route_to_form": {
+    "prefix": ["route_to_form", "frappe_route_to_form"],
+    "body": [
+      "frappe.set_route('Form', '${1:DocType}', '${2:name}');"
+    ],
+    "description": "Route to form"
+  },
+  "frappe_route_to_list": {
+    "prefix": ["route_to_list", "frappe_route_to_list"],
+    "body": [
+      "frappe.set_route('List', '${1:DocType}');"
+    ],
+    "description": "Route to list view"
+  },
+  "frappe_new_doc": {
+    "prefix": ["new_doc", "frappe_new_doc"],
+    "body": [
+      "frappe.new_doc('${1:DocType}');"
+    ],
+    "description": "Create new document"
+  },
+  "frappe_datetime_now": {
+    "prefix": ["datetime_now", "frappe_datetime_now"],
+    "body": [
+      "frappe.datetime.now_datetime()"
+    ],
+    "description": "Current datetime"
+  },
+  "frappe_format_currency": {
+    "prefix": ["format_currency", "frappe_format_currency"],
+    "body": [
+      "format_currency(${1:value}, '${2:currency}', ${3:precision})"
+    ],
+    "description": "Format currency value"
+  },
+  "frappe_get_doc": {
+    "prefix": ["get_doc", "frappe_get_doc"],
+    "body": [
+      "frappe.get_doc('${1:DocType}', '${2:name}').then(function(doc) {",
+      "\t${3:// Handle document}",
+      "});"
+    ],
+    "description": "Get document"
+  }
+}

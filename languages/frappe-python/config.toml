@@ -1,0 +1,24 @@
+name = "Frappe Python"
+grammar = "python"
+path_suffixes = ["py"]
+line_comments = ["# "]
+tab_size = 4
+hard_tabs = false
+first_line_pattern = "^#.*frappe"
+
+[language_servers.pylsp]
+name = "pylsp"
+language_ids = ["python"]
+
+[formatter]
+external = { command = "black", arguments = [
+    "--stdin-filename",
+    "{buffer_path}",
+    "-",
+] }
+
+[code_actions]
+# Enable Frappe-specific code actions
+frappe_hooks = true
+frappe_migrations = true
+frappe_doctypes = true

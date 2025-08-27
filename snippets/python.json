@@ -1,0 +1,210 @@
+{
+  "frappe_validate": {
+    "prefix": ["validate", "frappe_validate"],
+    "body": [
+      "def validate(self):",
+      "\t\"\"\"Called before saving the document\"\"\"",
+      "\t${1:pass}"
+    ],
+    "description": "Frappe validate hook"
+  },
+  "frappe_before_save": {
+    "prefix": ["before_save", "frappe_before_save"],
+    "body": [
+      "def before_save(self):",
+      "\t\"\"\"Called before saving the document\"\"\"",
+      "\t${1:pass}"
+    ],
+    "description": "Frappe before_save hook"
+  },
+  "frappe_after_insert": {
+    "prefix": ["after_insert", "frappe_after_insert"],
+    "body": [
+      "def after_insert(self):",
+      "\t\"\"\"Called after inserting the document\"\"\"",
+      "\t${1:pass}"
+    ],
+    "description": "Frappe after_insert hook"
+  },
+  "frappe_on_update": {
+    "prefix": ["on_update", "frappe_on_update"],
+    "body": [
+      "def on_update(self):",
+      "\t\"\"\"Called after updating the document\"\"\"",
+      "\t${1:pass}"
+    ],
+    "description": "Frappe on_update hook"
+  },
+  "frappe_on_submit": {
+    "prefix": ["on_submit", "frappe_on_submit"],
+    "body": [
+      "def on_submit(self):",
+      "\t\"\"\"Called when submitting the document\"\"\"",
+      "\t${1:pass}"
+    ],
+    "description": "Frappe on_submit hook"
+  },
+  "frappe_on_cancel": {
+    "prefix": ["on_cancel", "frappe_on_cancel"],
+    "body": [
+      "def on_cancel(self):",
+      "\t\"\"\"Called when cancelling the document\"\"\"",
+      "\t${1:pass}"
+    ],
+    "description": "Frappe on_cancel hook"
+  },
+  "frappe_on_trash": {
+    "prefix": ["on_trash", "frappe_on_trash"],
+    "body": [
+      "def on_trash(self):",
+      "\t\"\"\"Called before deleting the document\"\"\"",
+      "\t${1:pass}"
+    ],
+    "description": "Frappe on_trash hook"
+  },
+  "frappe_get_doc": {
+    "prefix": ["get_doc", "frappe_get_doc"],
+    "body": [
+      "doc = frappe.get_doc(\"${1:DocType}\", \"${2:name}\")"
+    ],
+    "description": "Get a Frappe document"
+  },
+  "frappe_new_doc": {
+    "prefix": ["new_doc", "frappe_new_doc"],
+    "body": [
+      "doc = frappe.new_doc(\"${1:DocType}\")",
+      "doc.${2:field} = \"${3:value}\"",
+      "doc.insert()"
+    ],
+    "description": "Create a new Frappe document"
+  },
+  "frappe_db_get_value": {
+    "prefix": ["db_get_value", "frappe_db_get_value"],
+    "body": [
+      "value = frappe.db.get_value(\"${1:DocType}\", \"${2:name}\", \"${3:fieldname}\")"
+    ],
+    "description": "Get a single value from database"
+  },
+  "frappe_db_get_list": {
+    "prefix": ["db_get_list", "frappe_db_get_list"],
+    "body": [
+      "data = frappe.db.get_list(\"${1:DocType}\", {",
+      "\tfilters={\"${2:field}\": \"${3:value}\"},",
+      "\tfields=[\"${4:field1}\", \"${5:field2}\"]",
+      "})"
+    ],
+    "description": "Get list of documents from database"
+  },
+  "frappe_db_get_all": {
+    "prefix": ["db_get_all", "frappe_get_all"],
+    "body": [
+      "data = frappe.get_all(\"${1:DocType}\", {",
+      "\tfilters={\"${2:field}\": \"${3:value}\"},",
+      "\tfields=[\"${4:field1}\", \"${5:field2}\"]",
+      "})"
+    ],
+    "description": "Get all documents from database"
+  },
+  "frappe_db_set_value": {
+    "prefix": ["db_set_value", "frappe_db_set_value"],
+    "body": [
+      "frappe.db.set_value(\"${1:DocType}\", \"${2:name}\", \"${3:fieldname}\", \"${4:value}\")"
+    ],
+    "description": "Set a value in the database"
+  },
+  "frappe_throw": {
+    "prefix": ["throw", "frappe_throw"],
+    "body": [
+      "frappe.throw(_(\"${1:Error message}\"))"
+    ],
+    "description": "Throw a Frappe error"
+  },
+  "frappe_msgprint": {
+    "prefix": ["msgprint", "frappe_msgprint"],
+    "body": [
+      "frappe.msgprint(_(\"${1:Message}\"))"
+    ],
+    "description": "Display a message to user"
+  },
+  "frappe_whitelist": {
+    "prefix": ["whitelist", "frappe_whitelist"],
+    "body": [
+      "@frappe.whitelist()",
+      "def ${1:function_name}():",
+      "\t\"\"\"${2:Function description}\"\"\"",
+      "\t${3:pass}"
+    ],
+    "description": "Create a whitelisted Frappe function"
+  },
+  "frappe_enqueue": {
+    "prefix": ["enqueue", "frappe_enqueue"],
+    "body": [
+      "frappe.enqueue(",
+      "\t\"${1:app.module.function}\",",
+      "\tqueue=\"${2:default}\",",
+      "\ttimeout=${3:300},",
+      "\t${4:param}=\"${5:value}\"",
+      ")"
+    ],
+    "description": "Enqueue a background job"
+  },
+  "frappe_log_error": {
+    "prefix": ["log_error", "frappe_log_error"],
+    "body": [
+      "frappe.log_error(\"${1:Error message}\", \"${2:Title}\")"
+    ],
+    "description": "Log an error in Frappe"
+  },
+  "frappe_has_permission": {
+    "prefix": ["has_permission", "frappe_has_permission"],
+    "body": [
+      "def has_permission(doc, user=None, permission_type=None):",
+      "\t\"\"\"Custom permission logic\"\"\"",
+      "\t${1:return True}"
+    ],
+    "description": "Custom permission function"
+  },
+  "frappe_migrate": {
+    "prefix": ["migrate", "frappe_migrate"],
+    "body": [
+      "import frappe",
+      "",
+      "def execute():",
+      "\t\"\"\"${1:Migration description}\"\"\"",
+      "\t${2:pass}"
+    ],
+    "description": "Frappe migration patch"
+  },
+  "frappe_scheduler": {
+    "prefix": ["scheduler", "frappe_scheduler"],
+    "body": [
+      "def ${1:function_name}():",
+      "\t\"\"\"Scheduled function - ${2:frequency}\"\"\"",
+      "\t${3:pass}"
+    ],
+    "description": "Frappe scheduled function"
+  },
+  "frappe_api_get": {
+    "prefix": ["api_get", "frappe_api_get"],
+    "body": [
+      "@frappe.whitelist(allow_guest=True)",
+      "def ${1:api_function}():",
+      "\t\"\"\"GET API endpoint\"\"\"",
+      "\tdata = {\"message\": \"${2:Hello World}\"}",
+      "\treturn data"
+    ],
+    "description": "Frappe GET API endpoint"
+  },
+  "frappe_api_post": {
+    "prefix": ["api_post", "frappe_api_post"],
+    "body": [
+      "@frappe.whitelist(methods=[\"POST\"])",
+      "def ${1:api_function}():",
+      "\t\"\"\"POST API endpoint\"\"\"",
+      "\tdata = frappe.local.form_dict",
+      "\t${2:# Process data}",
+      "\treturn {\"status\": \"success\"}"
+    ],
+    "description": "Frappe POST API endpoint"
+  }
+}
