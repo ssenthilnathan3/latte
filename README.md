@@ -585,44 +585,6 @@ fn handle_your_command(&self, args: Vec<String>, worktree: &Worktree) -> Result<
 }
 ```
 
-### 🧪 Testing Requirements
-
-- **Unit Tests**: All core functionality must have tests
-- **Integration Tests**: Test with real Frappe projects
-- **Performance Tests**: Ensure WebAssembly performance
-- **Cross-platform**: Test on macOS, Linux, Windows (WSL)
-
-### 📖 Documentation Standards
-
-- **Code Comments**: Rust doc comments for all public functions
-- **README Updates**: Keep feature documentation current
-- **Examples**: Provide working examples for new features
-- **Changelog**: Document all changes in CHANGELOG.md
-
-## 📊 Extension Metrics & Performance
-
-### 🚀 Performance Highlights
-- **WebAssembly Runtime**: Near-native performance with memory safety
-- **Process Monitoring**: Real-time with <1% CPU overhead  
-- **Code Analysis**: Scans 10,000+ files in <500ms
-- **Snippet Expansion**: <50ms response time
-- **Memory Usage**: <10MB for complete project analysis
-
-### 📈 Supported Project Scale
-- **Apps**: Unlimited apps per bench
-- **DocTypes**: 1,000+ DocTypes with full analysis
-- **Files**: 50,000+ files with instant search
-- **Processes**: 20+ concurrent bench processes
-- **Log Lines**: 100,000+ lines with real-time streaming
-
-## 📊 Version Information
-
-### Current Version: 0.1.0
-- **Release Date**: January 2024
-- **Zed Compatibility**: v0.192.0+
-- **Rust Edition**: 2021
-- **WebAssembly Target**: wasm32-wasip2
-
 ### Roadmap
 - **v0.2.0** → Visual DocType Designer, AI code suggestions
 - **v0.3.0** → Advanced debugging tools, performance profiler
@@ -655,64 +617,12 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 - **Sublime Text Frappe** → Snippet design patterns
 - **IntelliJ Frappe Plugin** → Code intelligence ideas
 
-## 🔗 Links & Resources
-
-### Official Links
-- **🏠 Homepage**: [Frappe Latte Extension](https://github.com/frappe/zed-latte)
-- **📚 Documentation**: [Complete Guide](https://github.com/frappe/zed-latte/wiki)
-- **🐛 Issue Tracker**: [GitHub Issues](https://github.com/frappe/zed-latte/issues)
-- **💬 Discussions**: [GitHub Discussions](https://github.com/frappe/zed-latte/discussions)
-
-### Community
-- **💭 Frappe Forum**: [Developer Discussion](https://discuss.frappe.io/c/development)
-- **💻 Discord**: [Frappe Dev Community](https://discord.gg/frappe)
-- **🐦 Twitter**: [@frappe](https://twitter.com/frappe)
-
 ### Learning Resources
 - **📖 Frappe Framework**: [Official Documentation](https://frappeframework.com/docs)
 - **🎓 ERPNext Guide**: [Developer Tutorials](https://docs.erpnext.com/docs/v14/user/manual/en/setting-up)
 - **⚙️ Zed Extensions**: [Development Guide](https://zed.dev/docs/extensions)
 - **🦀 Rust WebAssembly**: [WASM Book](https://rustwasm.github.io/book/)
-
-## 📞 Support & Contact
-
-### Getting Help
-1. **📋 Check Documentation** → Comprehensive guides and examples
-2. **🔍 Search Issues** → Common problems and solutions  
-3. **💬 Community Discussion** → Ask questions, share ideas
-4. **🐛 Report Bugs** → Detailed issue templates provided
-
-### Support Channels
-- **Priority Support**: GitHub Issues with detailed templates
-- **Community Help**: Frappe Forum development section
-- **Real-time Chat**: Discord #development channel
-- **Email Contact**: extensions@frappe.io (for critical issues)
-
-### Response Times
-- **🔴 Critical Bugs**: 24-48 hours
-- **🟡 Feature Requests**: 1-2 weeks  
-- **🟢 General Questions**: 2-7 days
-- **📝 Documentation**: Ongoing improvements
-
 ---
-
-<div align="center">
-
-## Made with ❤️ for the Frappe Developer Community
-
-**🌟 Star this repo if Latte makes your development faster!**
-
-**🔔 Watch for updates and new features**
-
-**🍴 Fork to contribute your own improvements**
-
-<br>
-
-[⭐ Give us a Star](https://github.com/frappe/zed-latte) •
-[🐛 Report Bug](https://github.com/frappe/zed-latte/issues/new?template=bug_report.md) •
-[💡 Request Feature](https://github.com/frappe/zed-latte/issues/new?template=feature_request.md) •
-[💬 Join Discussion](https://discuss.frappe.io/c/development) •
-[📧 Contact Us](mailto:extensions@frappe.io)
 
 <br>
 
