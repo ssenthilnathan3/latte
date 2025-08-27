@@ -1,0 +1,147 @@
+{
+    "actions": [],
+    "allow_copy": 0,
+    "allow_events_in_timeline": 0,
+    "allow_guest_to_view": 0,
+    "allow_import": 1,
+    "allow_rename": 1,
+    "autoname": "field:{{name_field}}",
+    "beta": 0,
+    "creation": "{{current_datetime}}",
+    "custom": 0,
+    "docstatus": 0,
+    "doctype": "DocType",
+    "document_type": "Document",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        {{#each fields}}
+        "{{fieldname}}"{{#unless @last}},{{/unless}}
+        {{/each}}
+    ],
+    "fields": [
+        {{#each fields}}
+        {
+            "allow_bulk_edit": {{allow_bulk_edit}},
+            "allow_in_quick_entry": {{allow_in_quick_entry}},
+            "allow_on_submit": {{allow_on_submit}},
+            "bold": {{bold}},
+            "collapsible": {{collapsible}},
+            "columns": {{columns}},
+            "depends_on": "{{depends_on}}",
+            "description": "{{description}}",
+            "fetch_from": "{{fetch_from}}",
+            "fetch_if_empty": {{fetch_if_empty}},
+            "fieldname": "{{fieldname}}",
+            "fieldtype": "{{fieldtype}}",
+            "hidden": {{hidden}},
+            "hide_border": {{hide_border}},
+            "hide_days": {{hide_days}},
+            "hide_seconds": {{hide_seconds}},
+            "ignore_user_permissions": {{ignore_user_permissions}},
+            "ignore_xss_filter": {{ignore_xss_filter}},
+            "in_global_search": {{in_global_search}},
+            "in_list_view": {{in_list_view}},
+            "in_preview": {{in_preview}},
+            "in_standard_filter": {{in_standard_filter}},
+            "label": "{{label}}",
+            "length": {{length}},
+            "mandatory_depends_on": "{{mandatory_depends_on}}",
+            "no_copy": {{no_copy}},
+            "options": "{{options}}",
+            "permlevel": {{permlevel}},
+            "precision": "{{precision}}",
+            "print_hide": {{print_hide}},
+            "print_hide_if_no_value": {{print_hide_if_no_value}},
+            "print_width": "{{print_width}}",
+            "read_only": {{read_only}},
+            "read_only_depends_on": "{{read_only_depends_on}}",
+            "remember_last_selected_value": {{remember_last_selected_value}},
+            "report_hide": {{report_hide}},
+            "reqd": {{reqd}},
+            "search_index": {{search_index}},
+            "set_only_once": {{set_only_once}},
+            "translatable": {{translatable}},
+            "unique": {{unique}},
+            "width": "{{width}}"
+        }{{#unless @last}},{{/unless}}
+        {{/each}}
+    ],
+    "has_web_view": 0,
+    "hide_heading": 0,
+    "hide_toolbar": 0,
+    "icon": "{{icon}}",
+    "idx": {{idx}},
+    "image_field": "{{image_field}}",
+    "in_create": 0,
+    "index_web_pages_for_search": 1,
+    "is_submittable": {{is_submittable}},
+    "is_tree": 0,
+    "issingle": 0,
+    "istable": 0,
+    "links": [
+        {{#each links}}
+        {
+            "group": "{{group}}",
+            "link_doctype": "{{link_doctype}}",
+            "link_fieldname": "{{link_fieldname}}",
+            "table_fieldname": "{{table_fieldname}}",
+            "custom": {{custom}}
+        }{{#unless @last}},{{/unless}}
+        {{/each}}
+    ],
+    "max_attachments": {{max_attachments}},
+    "menu_index": {{menu_index}},
+    "migration_hash": "{{migration_hash}}",
+    "modified": "{{current_datetime}}",
+    "modified_by": "{{modified_by}}",
+    "module": "{{module}}",
+    "name": "{{doctype_name}}",
+    "naming_rule": "{{naming_rule}}",
+    "nsm_parent_field": "{{nsm_parent_field}}",
+    "owner": "{{owner}}",
+    "permissions": [
+        {{#each permissions}}
+        {
+            "amend": {{amend}},
+            "cancel": {{cancel}},
+            "create": {{create}},
+            "delete": {{delete}},
+            "email": {{email}},
+            "export": {{export}},
+            "if_owner": {{if_owner}},
+            "import": {{import}},
+            "permlevel": {{permlevel}},
+            "print": {{print}},
+            "read": {{read}},
+            "report": {{report}},
+            "role": "{{role}}",
+            "select": {{select}},
+            "share": {{share}},
+            "submit": {{submit}},
+            "write": {{write}}
+        }{{#unless @last}},{{/unless}}
+        {{/each}}
+    ],
+    "quick_entry": {{quick_entry}},
+    "read_only": {{read_only}},
+    "read_only_onload": {{read_only_onload}},
+    "restrict_to_domain": "{{restrict_to_domain}}",
+    "search_fields": "{{search_fields}}",
+    "show_name_in_global_search": {{show_name_in_global_search}},
+    "show_preview_popup": {{show_preview_popup}},
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": [
+        {{#each states}}
+        {
+            "color": "{{color}}",
+            "title": "{{title}}"
+        }{{#unless @last}},{{/unless}}
+        {{/each}}
+    ],
+    "title_field": "{{title_field}}",
+    "track_changes": 1,
+    "track_seen": {{track_seen}},
+    "track_views": {{track_views}}
+}

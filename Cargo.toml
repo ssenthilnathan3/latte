@@ -1,0 +1,17 @@
+[package]
+name = "latte"
+version = "0.1.0"
+edition = "2021"
+description = "Latte - A comprehensive Zed extension for Frappe development"
+license = "MIT"
+repository = "https://github.com/frappe/zed-latte"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+zed_extension_api = "0.6.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+regex = "1.10"
+chrono = { version = "0.4", features = ["serde"] }

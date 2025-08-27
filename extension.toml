@@ -1,0 +1,27 @@
+id = "latte"
+name = "Latte"
+description = "A comprehensive Zed extension that empowers Frappe developers to build, scaffold, and manage apps with smart developer convenience features for productivity, intelligence, and code quality."
+version = "0.1.0"
+schema_version = 1
+authors = ["Latte Contributors"]
+repository = "https://github.com/frappe/zed-latte"
+
+[grammars.python]
+repository = "https://github.com/tree-sitter/tree-sitter-python"
+rev = "4bfdd9033a2225cc95032ce77066b7aeca9e2efc"
+
+[grammars.javascript]
+repository = "https://github.com/tree-sitter/tree-sitter-javascript"
+rev = "f772967f7b7bc7c28f845be2420a38472b16a8ee"
+
+[grammars.json]
+repository = "https://github.com/tree-sitter/tree-sitter-json"
+rev = "73076754005a460947cafe8e03a8cf5fa4fa2938"
+
+[grammars.html]
+repository = "https://github.com/tree-sitter/tree-sitter-html"
+rev = "29f53d8f4f2335e61bf6418ab8958dac3282077a"
+
+[grammars.css]
+repository = "https://github.com/tree-sitter/tree-sitter-css"
+rev = "769203d0f9abe1a9a691ac2b9fe4bb4397a73c51"
