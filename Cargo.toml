@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Latte - A comprehensive Zed extension for Frappe development"
 license = "MIT"
-repository = "https://github.com/frappe/zed-latte"
+repository = "https://github.com/ssenthilnathan3/latte"
 
 [lib]
 crate-type = ["cdylib"]
